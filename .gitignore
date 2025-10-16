@@ -4,3 +4,8 @@ vscode/
 logfile.log
 .DS_Store
 *.tmp
+
+.env
+__pycache__/
+*.pyc
+logfile.log
