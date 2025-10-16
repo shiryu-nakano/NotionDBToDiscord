@@ -1,8 +1,10 @@
 
 import random
-from API2 import extract_property
+from notion_api import extract_property
+from config import settings
 
-def get_random_unread_title_url_from_results(results) -> str:
+
+def pick_random_unread_title_url(results) -> tuple[str,str]:
     """
     すでに取得したNotionデータベースのページリスト(results)から、
     'Done' が True ではないページのみを抽出し、未読のものをランダムに1つ選択して
@@ -12,45 +14,67 @@ def get_random_unread_title_url_from_results(results) -> str:
         results (list): Notion APIで取得したページ情報のリスト。
 
     Returns:
-        str: "タイトル\nURL"の形式の文字列。
-             未読のページが存在しない場合は適宜メッセージを返す。
+        tuple(str,str)
+        str: title of the page
+        str: url of tha page
     """
-    unread_pages = []
+    unread = []
     for page in results:
-        done_val = extract_property(page, "Done")  # チェックボックスは "True" or "False" の文字列
-        if done_val != "True":
-            unread_pages.append(page)
+        done = extract_property(page, "Done")  # "True"/"False"/None を返す実装想定
+        if done != "True":
+            unread.append(page)
+    if not unread:
+        return ("未読のページはありません。", "")
+    p = random.choice(unread)
+    title = extract_property(p, "Name")
+    url   = extract_property(p, "URL")
+    return (title or "Untitled", url or "No URL")
 
-    if not unread_pages:
-        return "未読のページはありません。"
+def build_daily_message(title: str, url: str) -> str:
+    tpl = settings.MESSAGE_TEMPLATE.replace("\\n", "\n") 
+    return tpl.format(
+        greeting=settings.MESSAGE_GREETING,
+        title=(title or "Untitled"),
+        url=(url or "No URL"),
+    )
 
-    random_page = random.choice(unread_pages)
-    title = extract_property(random_page, "Name")
-    url = extract_property(random_page, "URL")
-
-    if not title:
-        title = "Untitled"
-    if not url:
-        url = "No URL"
-
-    return f"おはようございます．朝8時です．今日も気張っていきましょう．\n今日の論文は......\n{title}\n{url}"
 
 
 if __name__ == "__main__":
-    from API import get_notion_database
+    '''
+    連結テスト
+    notion_api+process_dataの連結テスト，簡易版
 
-    NOTION_API_KEY = "your notion api"         # Notionの統合トークン（ご自身のトークンに置き換えてください）
-    DATABASE_ID = "your notion database id"         # 対象のNotionデータベースID（ご自身のデータベースIDに置き換えてください）
-    NOTION_VERSION = "2022-06-28"            # 使用するNotion APIのバージョン
+    ① test of notion_api
+    envで指定したnotionのAPI，DBのIDを使ってデータベースからページを取得し，
+    
+    ② test of process_data.pick_random_unread_title_url
+    未読のものをランダムに1つ選ぶ→返り値はそのページのタイトルとそのページの論文に対応するurlのタプル
+
+    ③ test of process_data.build_daily_message
+    ②で得たタイトルとurlをprocess_dataのbuild_daily_messageに渡してメッセージを作成
+
+    成功すればNotionにある未読の論文のうち1つのタイトルとURLが標準出力される．
+    '''
+
+    from notion_api import get_notion_database
+
+    NOTION_API_KEY = settings.NOTION_API_KEY
+    DATABASE_ID = settings.NOTION_DATABASE_ID
+    NOTION_VERSION = settings.NOTION_VERSION
 
     # 取得したいプロパティ名のリスト（例: "Name"と"URL"）
-    SELECTED_PROPERTIES = ["Name", "Done","Checkbox"]
+    SELECTED_PROPERTIES = settings.SELECTED_PROPERTIES
 
-    # すでにNotionからデータベースを取得
+    # Notionからデータベースを取得
     results = get_notion_database(NOTION_API_KEY, DATABASE_ID, NOTION_VERSION)
 
+    # 未読のものをランダムに1つ選ぶ
+    title, url = pick_random_unread_title_url(results)
+    print(f"Title: {title}\nURL: {url}")
 
-
-    # ランダムに未読ページを選択して「タイトル\nURL」を作成
-    random_unread_str = get_random_unread_title_url_from_results(results)
-    print(random_unread_str)
+    # メッセージを作成
+    message = build_daily_message(title, url)
+    print("\n=== Generated Message ===")
+    print(message)
+    print("=========================")

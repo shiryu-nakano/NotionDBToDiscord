@@ -9,3 +9,8 @@ logfile.log
 __pycache__/
 *.pyc
 logfile.log
+
+bootstrap_env_and_patch.sh
+
+*.bak_envpatch
+run.sh

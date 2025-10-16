@@ -1,39 +1,28 @@
+from config import settings
 import requests
 
-def send_discord_message(message: str, webhook_url: str):
-    """
-    DiscordのWebhookを使用して指定したメッセージを送信する
 
-    Args:
-        message (str): 送信するメッセージの文字列
-        webhook_url (str): DiscordのWebhook URL
-    """
-    payload = {
-        "content": message
-    }
-    response = requests.post(webhook_url, json=payload)
-    
-    # DiscordのWebhookは成功時に204(No Content)を返すためそれをチェックする
-    if response.status_code != 204:
-        raise Exception(f"Discordへのメッセージ送信に失敗しました。レスポンス: {response.text}")
-    
-    print("Discordへのメッセージ送信に成功しました。")
+def send_discord_message(message: str):
+    resp = requests.post(settings.DISCORD_WEBHOOK_URL, json={"content": message})
+    if resp.status_code != 204:
+        raise RuntimeError(f"Discord送信失敗: {resp.status_code} {resp.text}")
+
 
 if __name__ == "__main__":
+    from process_data import build_daily_message
     '''
     discordへのメッセージ送信テスト
-    DISCORD_WEBHOOK_URL: discordのwebhookを入力する
+    DISCORD_WEBHOOK_URL: discordのwebhook→これは.evnであらかじめ設定しておくこと
 
     成功すればdiscordに`test_message`で指定した文字列が送信される
     '''
-    
 
-
-    # --- 設定 ---
-    # ご自身のDiscordのWebhook URLに置き換えてください
-    DISCORD_WEBHOOK_URL = "your discord webhook"
+    DISCORD_WEBHOOK_URL = settings.DISCORD_WEBHOOK_URL
     
     # 任意のテストメッセージ
-    test_message = "これはテストメッセージです！"
+    test_title = "これはテストメッセージです！"
+    test_url = "https://hackertyper.net/" # 遊びです．アクセスしてみよう
+    message = build_daily_message(test_title, test_url)
+    send_discord_message(message)
     
-    send_discord_message(test_message, DISCORD_WEBHOOK_URL)
+

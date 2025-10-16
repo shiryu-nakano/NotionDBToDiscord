@@ -1,8 +1,9 @@
+from config import settings
 import requests
 
 def get_notion_database(api_key: str, database_id: str, notion_version: str = "2022-06-28"):
     """
-    Notion APIを使用して指定したデータベースの全件（ページネーション対応）を取得します。
+    Notion APIを使用して指定したデータベースの全件を取得する
 
     Args:
         api_key (str): Notionの統合トークン。
@@ -10,8 +11,9 @@ def get_notion_database(api_key: str, database_id: str, notion_version: str = "2
         notion_version (str): 使用するNotion APIのバージョン（デフォルトは "2022-06-28"）。
 
     Returns:
-        list: 取得した全ページ情報のリスト。エラー時は例外を発生させます。
+        list: 取得した全ページ情報のリスト。エラー時は例外を発生させます
     """
+
     notion_api_url = f"https://api.notion.com/v1/databases/{database_id}/query"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -44,41 +46,6 @@ def get_notion_database(api_key: str, database_id: str, notion_version: str = "2
     
     return all_results
 
-def extract_property_(page: dict, property_name: str):
-    """
-    指定したプロパティの値をページから抽出します。
-    
-    Args:
-        page (dict): Notion APIから取得したページ情報。
-        property_name (str): 取得対象のプロパティ名。
-
-    Returns:
-        str: 抽出した値（文字列）。プロパティが存在しない場合はNoneを返します。
-    """
-    properties = page.get("properties", {})
-    if property_name not in properties:
-        return None
-
-    prop = properties[property_name]
-    prop_type = prop.get("type")
-
-    if prop_type == "title":
-        # タイトルの場合、複数のテキストブロックを結合
-        return "".join([t.get("plain_text", "") for t in prop.get("title", [])])
-    elif prop_type == "url":
-        return prop.get("url")
-    elif prop_type == "rich_text":
-        return "".join([t.get("plain_text", "") for t in prop.get("rich_text", [])])
-    elif prop_type == "number":
-        return str(prop.get("number"))
-    elif prop_type == "select":
-        option = prop.get("select")
-        return option.get("name") if option else ""
-    elif prop_type == "date":
-        date_info = prop.get("date")
-        return date_info.get("start") if date_info else ""
-    # 他の型も必要に応じて追加できます
-    return None
 
 def extract_property(page: dict, property_name: str):
     """
@@ -139,13 +106,15 @@ def format_page_info(page: dict, selected_properties: list):
     return "\n".join(lines)
 
 if __name__ == "__main__":
-    # --- 設定 ---
-    NOTION_API_KEY = "your notion api key"         # Notionの統合トークン（ご自身のトークンに置き換えてください）
-    DATABASE_ID = "your notion database id"         # 対象のNotionデータベースID（ご自身のデータベースIDに置き換えてください）
-    NOTION_VERSION = "2022-06-28"            # 使用するNotion APIのバージョン
 
-    # 取得したいプロパティ名のリスト（例: "Name"と"URL"）
-    SELECTED_PROPERTIES = ["Name", "Done","Checkbox"]
+    # Configurations
+    NOTION_API_KEY = settings.NOTION_API_KEY 
+    DATABASE_ID = settings.NOTION_DATABASE_ID
+    NOTION_VERSION = settings.NOTION_VERSION          
+
+    
+    # 取得したいプロパティ名のリスト
+    SELECTED_PROPERTIES =  settings.SELECTED_PROPERTIES
 
     try:
         # データベースの全件を取得
@@ -158,3 +127,7 @@ if __name__ == "__main__":
             print()  # 空行で区切り
     except Exception as e:
         print("エラーが発生しました:", e)
+
+    print(type(results))
+    print(type(results[1]))
+    print(results[1])

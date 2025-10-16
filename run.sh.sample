@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+exec >> /Users/nkn4ryu/Documents/NotionDBToDiscord/logfile.log 2>&1
+
+echo "---- $(date) cron started ----"
+echo "whoami: $(whoami)"
+echo "SHELL: $SHELL"
+echo "PATH: $PATH"
+echo "CWD(before): $(pwd)"
+
+# プロジェクト直下へ
+# 例えば，「/Users/username/Documents/NotionDBToDiscord」
+cd "path/to/NotionDBToDiscord" || { echo "cd failed"; exit 1; }
+echo "CWD(after):  $(pwd)"
+
+# 仮想環境のフルパスでPythonを直叩きする
+/Users/nkn4ryu/.pyenv/versions/NotionPaperDiscord/bin/python -c "import sys; print('sys.executable:', sys.executable)"
+
+# 実行
+/Users/nkn4ryu/.pyenv/versions/NotionPaperDiscord/bin/python main.py
+
+echo "---- $(date) cron finished ----"

@@ -1,7 +1,12 @@
-from API import *
+from config import settings
+from notion_api import *
 import random
 from  discord_message import *
 from process_data import *
+
+
+
+
 
 if __name__ == "__main__":
     '''
@@ -15,24 +20,23 @@ if __name__ == "__main__":
     '''
 
     # --- 設定 ---
-    NOTION_API_KEY = "your notion api key"         # Notionの統合トークン（ご自身のトークンに置き換えてください）
-    DATABASE_ID = "your notion database id"         # 対象のNotionデータベースID（ご自身のデータベースIDに置き換えてください）
-    NOTION_VERSION = "2022-06-28"            # 使用するNotion APIのバージョン
+    NOTION_API_KEY = settings.NOTION_API_KEY       
+    DATABASE_ID = settings.NOTION_DATABASE_ID     
+    NOTION_VERSION = settings.NOTION_VERSION  
+    DISCORD_WEBHOOK_URL = settings.DISCORD_WEBHOOK_URL   
 
-    # 取得したいプロパティ名のリスト（例: "Name"と"URL"）
-    SELECTED_PROPERTIES = ["Name", "Done", "URL"]
+    # 取得したいプロパティ名のリスト
+    SELECTED_PROPERTIES = settings.SELECTED_PROPERTIES
 
-    # すでにNotionからデータベースを取得
+    # Notionからデータベースを取得
     results = get_notion_database(NOTION_API_KEY, DATABASE_ID, NOTION_VERSION)
 
-
-
-    # ランダムに未読ページを選択して「タイトル\nURL」を作成
-    random_unread_str = get_random_unread_title_url_from_results(results)
-    print(random_unread_str)
-
-    DISCORD_WEBHOOK_URL = "your discord webhook url" 
-    # 任意のテストメッセージ
-    test_message = random_unread_str
+    # ランダムに未読ページを選択し
+    title, url = pick_random_unread_title_url(results)
+    message = build_daily_message(title, url)
+    send_discord_message(message)
+    print("\n[LOG]-------------------------------")
+    print("送信したメッセージ:")    
+    print(message)
+    print("[LOG]-------------------------------\n")
     
-    send_discord_message(test_message, DISCORD_WEBHOOK_URL)
