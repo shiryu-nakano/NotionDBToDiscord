@@ -20,6 +20,15 @@ def send_discord_message(message: str, webhook_url: str):
     print("Discordへのメッセージ送信に成功しました。")
 
 if __name__ == "__main__":
+    '''
+    discordへのメッセージ送信テスト
+    DISCORD_WEBHOOK_URL: discordのwebhookを入力する
+
+    成功すればdiscordに`test_message`で指定した文字列が送信される
+    '''
+    
+
+
     # --- 設定 ---
     # ご自身のDiscordのWebhook URLに置き換えてください
     DISCORD_WEBHOOK_URL = "your discord webhook"

@@ -1,9 +1,19 @@
-from API2 import *
+from API import *
 import random
 from  discord_message import *
 from process_data import *
 
 if __name__ == "__main__":
+    '''
+    連結テスト
+    ①NotionのDBから未読の論文を1つランダムに選ぶ
+
+    ②選んだ論文をdiscordに送る
+
+    成功すればNotionにある未読の論文のうち1つがDiscordにメッセージとして送られる．
+
+    '''
+
     # --- 設定 ---
     NOTION_API_KEY = "your notion api key"         # Notionの統合トークン（ご自身のトークンに置き換えてください）
     DATABASE_ID = "your notion database id"         # 対象のNotionデータベースID（ご自身のデータベースIDに置き換えてください）
