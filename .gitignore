@@ -14,3 +14,7 @@ bootstrap_env_and_patch.sh
 
 *.bak_envpatch
 run.sh
+template/main_academic.py
+template/main_book.py
+template/main_paper.py
+template/main.py

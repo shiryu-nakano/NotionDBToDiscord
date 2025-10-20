@@ -1,4 +1,4 @@
-from config import settings
+from config import Settings
 import requests
 
 def get_notion_database(api_key: str, database_id: str, notion_version: str = "2022-06-28"):
@@ -64,6 +64,7 @@ def extract_property(page: dict, property_name: str):
 
     prop = properties[property_name]
     prop_type = prop.get("type")
+    #print(f"[DEBUG] Extracting property '{property_name}' of type '{prop_type}'")  # デバッグ用出力
 
     if prop_type == "title":
         # タイトルの場合、複数のテキストブロックを結合
@@ -83,6 +84,9 @@ def extract_property(page: dict, property_name: str):
     elif prop_type == "checkbox":
         # チェックボックスはbooleanで返るので、文字列に変換して返す
         return str(prop.get("checkbox"))
+    elif prop_type == "status":
+        status_info = prop.get("status")
+        return status_info.get("name") if status_info else None
     # 他の型も必要に応じて追加できます
     return None
 
@@ -106,28 +110,48 @@ def format_page_info(page: dict, selected_properties: list):
     return "\n".join(lines)
 
 if __name__ == "__main__":
+    import os
+    import sys
+    from dotenv import load_dotenv
 
-    # Configurations
-    NOTION_API_KEY = settings.NOTION_API_KEY 
-    DATABASE_ID = settings.NOTION_DATABASE_ID
-    NOTION_VERSION = settings.NOTION_VERSION          
+    load_dotenv()
 
-    
-    # 取得したいプロパティ名のリスト
-    SELECTED_PROPERTIES =  settings.SELECTED_PROPERTIES
+    # 実行引数からターゲット環境名を取得
+    if len(sys.argv) != 2:
+        print("Usage: python notion_api.py <env_name>")
+        print("Example: python notion_api.py paper")
+        sys.exit(1)
 
+    env_name = sys.argv[1].lower()
+
+    # 共通設定
+    NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+    NOTION_VERSION = os.getenv("NOTION_VERSION", "2022-06-28")
+
+    # サフィックス付き変数を取得
+    NOTION_DATABASE_ID = os.getenv(f"NOTION_DATABASE_{env_name}")
+    raw_props = os.getenv(f"SELECTED_PROPERTIES_{env_name}", "")
+    SELECTED_PROPERTIES = [s.strip() for s in raw_props.split(",") if s.strip()]
+
+    if not NOTION_DATABASE_ID:
+        raise RuntimeError(f"NOTION_DATABASE_{env_name} が設定されていません")
+    if not SELECTED_PROPERTIES:
+        raise RuntimeError(f"SELECTED_PROPERTIES_{env_name} が設定されていません")
+
+    # データベース取得
     try:
-        # データベースの全件を取得
-        results = get_notion_database(NOTION_API_KEY, DATABASE_ID, NOTION_VERSION)
-        print("Notionデータベースの内容 (全件):\n")
-        for idx, page in enumerate(results, start=1):
-            formatted_info = format_page_info(page, SELECTED_PROPERTIES)
-            print(f"--- Page {idx} ---")
-            print(formatted_info)
-            print()  # 空行で区切り
+        results = get_notion_database(NOTION_API_KEY, NOTION_DATABASE_ID, NOTION_VERSION)
+        print(f"\n[INFO] Notion DB test for environment: {env_name}")
+        print(f"[INFO] Database ID: {NOTION_DATABASE_ID}")
+        print(f"[INFO] Selected properties: {SELECTED_PROPERTIES}")
+        print("\n=== First 5 entries ===")
+
+        for i, page in enumerate(results[:5]):
+            print(f"--- Page {i+1} ---")
+            for prop in SELECTED_PROPERTIES:
+                val = extract_property(page, prop)
+                print(f"{prop}: {val}")
+            print()
+
     except Exception as e:
         print("エラーが発生しました:", e)
-
-    print(type(results))
-    print(type(results[1]))
-    print(results[1])

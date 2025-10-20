@@ -1,28 +1,37 @@
-from config import settings
+from config import Settings
 import requests
 
 
-def send_discord_message(message: str):
+def send_discord_message(message: str, settings:Settings) -> None:
     resp = requests.post(settings.DISCORD_WEBHOOK_URL, json={"content": message})
     if resp.status_code != 204:
         raise RuntimeError(f"Discord送信失敗: {resp.status_code} {resp.text}")
 
 
 if __name__ == "__main__":
-    from process_data import build_daily_message
     '''
     discordへのメッセージ送信テスト
     DISCORD_WEBHOOK_URL: discordのwebhook→これは.evnであらかじめ設定しておくこと
 
     成功すればdiscordに`test_message`で指定した文字列が送信される
     '''
+    import sys
+    from notion_api import get_notion_database
+    from config import Settings
+    from process_data import build_daily_message
 
+
+    env_name = sys.argv[1].lower() if len(sys.argv) >= 2 else "paper"
+    settings = Settings(env_suffix=env_name)
+
+    print(f"[INFO] Running process_data test for environment: {env_name}")
+    print(f"[INFO] Using database: {settings.NOTION_DATABASE_ID}")
     DISCORD_WEBHOOK_URL = settings.DISCORD_WEBHOOK_URL
     
     # 任意のテストメッセージ
     test_title = "これはテストメッセージです！"
     test_url = "https://hackertyper.net/" # 遊びです．アクセスしてみよう
-    message = build_daily_message(test_title, test_url)
-    send_discord_message(message)
+    message = build_daily_message(test_title, test_url, settings)
+    send_discord_message(message, settings)
     
 

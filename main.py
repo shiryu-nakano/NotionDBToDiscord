@@ -1,42 +1,42 @@
-from config import settings
-from notion_api import *
-import random
-from  discord_message import *
-from process_data import *
-
-
-
-
+import sys
+from config import Settings
+from notion_api import get_notion_database
+from process_data import (
+    pick_random_unread_title_url,
+    pick_random_unread_book,
+    pick_random_unread_textbook,
+    build_daily_message,
+)
+from discord_message import send_discord_message
 
 if __name__ == "__main__":
-    '''
-    連結テスト
-    ①NotionのDBから未読の論文を1つランダムに選ぶ
+    if len(sys.argv) != 2:
+        print("Usage: python main.py <env>")
+        print("Example: python main.py paper")
+        sys.exit(1)
 
-    ②選んだ論文をdiscordに送る
+    env_name = sys.argv[1].lower()
+    settings = Settings(env_suffix=env_name)
 
-    成功すればNotionにある未読の論文のうち1つがDiscordにメッセージとして送られる．
+    print(f"[INFO] Running Notion→Discord for env: {env_name}")
+    print(f"[INFO] DB ID: {settings.NOTION_DATABASE_ID}")
 
-    '''
+    results = get_notion_database(
+        settings.NOTION_API_KEY,
+        settings.NOTION_DATABASE_ID,
+        settings.NOTION_VERSION
+    )
 
-    # --- 設定 ---
-    NOTION_API_KEY = settings.NOTION_API_KEY       
-    DATABASE_ID = settings.NOTION_DATABASE_ID     
-    NOTION_VERSION = settings.NOTION_VERSION  
-    DISCORD_WEBHOOK_URL = settings.DISCORD_WEBHOOK_URL   
+    if env_name == "paper":
+        title, url = pick_random_unread_title_url(results)
+    elif env_name == "book":
+        title, url = pick_random_unread_book(results)
+    elif env_name == "academic":
+        title, url = pick_random_unread_textbook(results)
+    else:
+        print(f"[ERROR] Unknown env: {env_name}")
+        sys.exit(1)
 
-    # 取得したいプロパティ名のリスト
-    SELECTED_PROPERTIES = settings.SELECTED_PROPERTIES
-
-    # Notionからデータベースを取得
-    results = get_notion_database(NOTION_API_KEY, DATABASE_ID, NOTION_VERSION)
-
-    # ランダムに未読ページを選択し
-    title, url = pick_random_unread_title_url(results)
-    message = build_daily_message(title, url)
-    send_discord_message(message)
-    print("\n[LOG]-------------------------------")
-    print("送信したメッセージ:")    
-    print(message)
-    print("[LOG]-------------------------------\n")
-    
+    message = build_daily_message(title, url, settings)
+    print(f"[INFO] Generated message:\n{message}")
+    send_discord_message(message, settings)

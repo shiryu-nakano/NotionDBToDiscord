@@ -1,13 +1,9 @@
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 from typing import Optional
 
-'''
-.env で設定した変数を読み込んで，settingsに格納する
-'''
 
-
-
+# === .env ロード ===
 load_dotenv()
 
 def _env(name: str, default: Optional[str] = None, required: bool = False) -> str:
@@ -17,36 +13,49 @@ def _env(name: str, default: Optional[str] = None, required: bool = False) -> st
     return val
 
 class Settings:
-    # Notion
-    NOTION_API_KEY      = _env("NOTION_API_KEY", required=True)
-    NOTION_DATABASE_ID  = _env("NOTION_DATABASE_ID", required=True)
-    NOTION_VERSION      = _env("NOTION_VERSION", "2022-06-28")
+    """
+    共通 + サフィックス付き設定を読み込んで、settings.env によって環境切替を可能にする
+    """
 
-    # Discord
-    DISCORD_WEBHOOK_URL = _env("DISCORD_WEBHOOK_URL", required=True)
+    def __init__(self, env_suffix: str = ""):
+        self.suffix = env_suffix.lower().strip()  # "paper", "book", "academic" など
 
-    # Messages
-    MESSAGE_GREETING    = _env("MESSAGE_GREETING", "おはようございます．今日の論文は.....")
-    MESSAGE_TEMPLATE    = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
+        # 共通設定
+        self.NOTION_API_KEY = _env("NOTION_API_KEY", required=True)
+        self.NOTION_VERSION = _env("NOTION_VERSION", "2022-06-28")
+        self.DISCORD_WEBHOOK_URL = _env("DISCORD_WEBHOOK_URL", required=True)
+        self.MESSAGE_TEMPLATE = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
 
-    # --- Notionで取得するプロパティ名リスト ---
-    SELECTED_PROPERTIES = [s.strip() for s in _env("SELECTED_PROPERTIES", "Name,Done,URL").split(",")]
+        # 環境ごとのサフィックス付き設定
+        self.NOTION_DATABASE_ID = _env(f"NOTION_DATABASE_{self.suffix}", required=True)
+        self.MESSAGE_GREETING = _env(f"MESSAGE_GREETING_{self.suffix}", "おはようございます．今日の論文は.....")
 
+        prop_list_raw = _env(f"SELECTED_PROPERTIES_{self.suffix}", "Name,Done,URL")
+        self.SELECTED_PROPERTIES = [p.strip() for p in prop_list_raw.split(",") if p.strip()]
 
-settings = Settings()
-
-
+    def __repr__(self):
+        return (
+            f"Settings(env_suffix='{self.suffix}')\n"
+            f"NOTION_API_KEY=****{self.NOTION_API_KEY[-4:]}\n"
+            f"NOTION_DATABASE_ID={self.NOTION_DATABASE_ID}\n"
+            f"NOTION_VERSION={self.NOTION_VERSION}\n"
+            f"DISCORD_WEBHOOK_URL={self.DISCORD_WEBHOOK_URL[:40]}...\n"
+            f"MESSAGE_GREETING={self.MESSAGE_GREETING}\n"
+            f"MESSAGE_TEMPLATE={self.MESSAGE_TEMPLATE}\n"
+            f"SELECTED_PROPERTIES={self.SELECTED_PROPERTIES}"
+        )
 
 if __name__ == "__main__":
-    settings = Settings()
+    import sys
 
-    print("\n\n=== .env テスト出力 ===")
-    print("NOTION_API_KEY:", settings.NOTION_API_KEY[:10] + "..." if settings.NOTION_API_KEY else "(未設定)")
-    print("NOTION_DATABASE_ID:", settings.NOTION_DATABASE_ID)
-    print("NOTION_VERSION:", settings.NOTION_VERSION)
-    print("DISCORD_WEBHOOK_URL:", settings.DISCORD_WEBHOOK_URL[:40] + "...")
-    print("MESSAGE_GREETING:", settings.MESSAGE_GREETING)
-    print("MESSAGE_TEMPLATE:", settings.MESSAGE_TEMPLATE)
-    print("SELECTED_PROPERTIES:", settings.SELECTED_PROPERTIES)
-    print("========================")
-    
+    if len(sys.argv) != 2:
+        print("Usage: python config.py <env_suffix>")
+        print("Example: python config.py paper")
+        sys.exit(1)
+
+    suffix = sys.argv[1]
+    settings = Settings(env_suffix=suffix)
+
+    print("\n=== .env 読み込み確認 ===")
+    print(settings)
+    print("==========================\n")
