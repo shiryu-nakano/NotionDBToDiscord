@@ -28,12 +28,10 @@ jobs:
           echo "NOTION_API_KEY=${{ secrets.NOTION_API_KEY }}" >> $GITHUB_ENV
           echo "NOTION_VERSION=2022-06-28" >> $GITHUB_ENV
 
-          UPPER_TARGET=$(echo "${{ matrix.target }}" | tr '[:lower:]' '[:upper:]')
-
-          echo "DISCORD_WEBHOOK_URL=${{ secrets[format('DISCORD_WEBHOOK_URL_' + UPPER_TARGET)] }}" >> $GITHUB_ENV
-          echo "NOTION_DATABASE_${{ matrix.target }}=${{ secrets[format('NOTION_DATABASE_' + UPPER_TARGET)] }}" >> $GITHUB_ENV
-          echo "MESSAGE_GREETING_${{ matrix.target }}=${{ secrets[format('MESSAGE_GREETING_' + UPPER_TARGET)] }}" >> $GITHUB_ENV
-          echo "SELECTED_PROPERTIES_${{ matrix.target }}=${{ secrets[format('SELECTED_PROPERTIES_' + UPPER_TARGET)] }}" >> $GITHUB_ENV
+          echo "DISCORD_WEBHOOK_URL=${{ secrets[format('DISCORD_WEBHOOK_URL_%s', matrix.target | upper)] }}" >> $GITHUB_ENV
+          echo "NOTION_DATABASE_${{ matrix.target }}=${{ secrets[format('NOTION_DATABASE_%s', matrix.target | upper)] }}" >> $GITHUB_ENV
+          echo "MESSAGE_GREETING_${{ matrix.target }}=${{ secrets[format('MESSAGE_GREETING_%s', matrix.target | upper)] }}" >> $GITHUB_ENV
+          echo "SELECTED_PROPERTIES_${{ matrix.target }}=${{ secrets[format('SELECTED_PROPERTIES_%s', matrix.target | upper)] }}" >> $GITHUB_ENV
           echo "MESSAGE_TEMPLATE={greeting}\\n{title}\\n{url}" >> $GITHUB_ENV
 
       - name: Run main.py for ${{ matrix.target }}
