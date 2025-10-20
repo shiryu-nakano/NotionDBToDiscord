@@ -1,4 +1,4 @@
-from config import Settings
+from config import settings
 import requests
 
 def get_notion_database(api_key: str, database_id: str, notion_version: str = "2022-06-28"):
@@ -128,9 +128,9 @@ if __name__ == "__main__":
     NOTION_API_KEY = os.getenv("NOTION_API_KEY")
     NOTION_VERSION = os.getenv("NOTION_VERSION", "2022-06-28")
 
-    # サフィックス付き変数を取得
-    NOTION_DATABASE_ID = os.getenv(f"NOTION_DATABASE_{env_name}")
-    raw_props = os.getenv(f"SELECTED_PROPERTIES_{env_name}", "")
+    # サフィックス付き変数を取得    
+    NOTION_DATABASE_ID = os.getenv(f"NOTION_DATABASE_{env_name.upper()}")
+    raw_props = os.getenv(f"SELECTED_PROPERTIES_{env_name.upper()}", "")
     SELECTED_PROPERTIES = [s.strip() for s in raw_props.split(",") if s.strip()]
 
     if not NOTION_DATABASE_ID:
