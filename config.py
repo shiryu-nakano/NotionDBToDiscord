@@ -1,9 +1,7 @@
 import os
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, Dict
 
-
-# === .env ロード ===
 load_dotenv()
 
 def _env(name: str, default: Optional[str] = None, required: bool = False) -> str:
@@ -14,48 +12,60 @@ def _env(name: str, default: Optional[str] = None, required: bool = False) -> st
 
 class Settings:
     """
-    共通 + サフィックス付き設定を読み込んで、settings.env によって環境切替を可能にする
+    - 共通: NOTION_API_KEY, NOTION_VERSION, MESSAGE_TEMPLATE
+    - 環境別: NOTION_DATABASE_<suffix>, MESSAGE_GREETING_<suffix>,
+             SELECTED_PROPERTIES_<suffix>, DISCORD_WEBHOOK_URL_<SUFFIX>
+    - suffix でアクティブ環境を選択。環境別Webhookは個別変数でも保持。
     """
 
-    def __init__(self, env_suffix: str = ""):
-        self.suffix = env_suffix.lower().strip()  # "paper", "book", "academic" など
+    def __init__(self, env_suffix: str = "paper"):
+        self.suffix = suffix = env_suffix.lower().strip()
 
-        # 共通設定
-        self.NOTION_API_KEY = _env("NOTION_API_KEY", required=True)
-        self.NOTION_VERSION = _env("NOTION_VERSION", "2022-06-28")
-        self.DISCORD_WEBHOOK_URL = _env("DISCORD_WEBHOOK_URL", required=True)
+        # --- 共通 ---
+        self.NOTION_API_KEY   = _env("NOTION_API_KEY", required=True)
+        self.NOTION_VERSION   = _env("NOTION_VERSION", "2022-06-28")
         self.MESSAGE_TEMPLATE = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
 
-        # 環境ごとのサフィックス付き設定
-        self.NOTION_DATABASE_ID = _env(f"NOTION_DATABASE_{self.suffix}", required=True)
-        self.MESSAGE_GREETING = _env(f"MESSAGE_GREETING_{self.suffix}", "おはようございます．今日の論文は.....")
+        # --- 環境別（DB, メッセージ, プロパティ）---
+        self.NOTION_DATABASE_ID  = _env(f"NOTION_DATABASE_{suffix}", required=True)
+        self.MESSAGE_GREETING    = _env(f"MESSAGE_GREETING_{suffix}", "おはようございます．今日の論文は.....")
+        props_raw                = _env(f"SELECTED_PROPERTIES_{suffix}", "Name,Done,URL")
+        self.SELECTED_PROPERTIES = [p.strip() for p in props_raw.split(",") if p.strip()]
 
-        prop_list_raw = _env(f"SELECTED_PROPERTIES_{self.suffix}", "Name,Done,URL")
-        self.SELECTED_PROPERTIES = [p.strip() for p in prop_list_raw.split(",") if p.strip()]
+        # --- Webhook: 環境ごとに個別保持 + アクティブも用意 ---
+        # ※ CI では実行ターゲット以外のWebhookが未設定でも落ちないよう required=False
+        self.DISCORD_WEBHOOK_URL_PAPER    = _env("DISCORD_WEBHOOK_URL_PAPER",    required=False)
+        self.DISCORD_WEBHOOK_URL_BOOK     = _env("DISCORD_WEBHOOK_URL_BOOK",     required=False)
+        self.DISCORD_WEBHOOK_URL_ACADEMIC = _env("DISCORD_WEBHOOK_URL_ACADEMIC", required=False)
 
-    def __repr__(self):
-        return (
-            f"Settings(env_suffix='{self.suffix}')\n"
-            f"NOTION_API_KEY=****{self.NOTION_API_KEY[-4:]}\n"
-            f"NOTION_DATABASE_ID={self.NOTION_DATABASE_ID}\n"
-            f"NOTION_VERSION={self.NOTION_VERSION}\n"
-            f"DISCORD_WEBHOOK_URL={self.DISCORD_WEBHOOK_URL[:40]}...\n"
-            f"MESSAGE_GREETING={self.MESSAGE_GREETING}\n"
-            f"MESSAGE_TEMPLATE={self.MESSAGE_TEMPLATE}\n"
-            f"SELECTED_PROPERTIES={self.SELECTED_PROPERTIES}"
+        self.DISCORD_WEBHOOK_URLS: Dict[str, Optional[str]] = {
+            "paper":    self.DISCORD_WEBHOOK_URL_PAPER,
+            "book":     self.DISCORD_WEBHOOK_URL_BOOK,
+            "academic": self.DISCORD_WEBHOOK_URL_ACADEMIC,
+        }
+
+        # アクティブ（現在実行ターゲット）のWebhook
+        #   1) 個別保持に入っていればそれを使う
+        #   2) それでも空なら、環境名から直接読み直して必須化
+        key_upper = suffix.upper()
+        self.DISCORD_WEBHOOK_URL = (
+            self.DISCORD_WEBHOOK_URLS.get(suffix)
+            or _env(f"DISCORD_WEBHOOK_URL_{key_upper}", required=True)
         )
 
-if __name__ == "__main__":
-    import sys
+    # 便利メソッド：任意の環境名でWebhookを取得（未設定なら None）
+    def get_webhook(self, env_name: Optional[str] = None) -> Optional[str]:
+        if env_name is None:
+            return self.DISCORD_WEBHOOK_URL
+        return self.DISCORD_WEBHOOK_URLS.get(env_name.lower())
 
-    if len(sys.argv) != 2:
-        print("Usage: python config.py <env_suffix>")
-        print("Example: python config.py paper")
-        sys.exit(1)
-
-    suffix = sys.argv[1]
-    settings = Settings(env_suffix=suffix)
-
-    print("\n=== .env 読み込み確認 ===")
-    print(settings)
-    print("==========================\n")
+    def __repr__(self):
+        masked = lambda s: (s[:4] + "..." + s[-4:]) if s and len(s) > 10 else (s or "")
+        return (
+            f"Settings(suffix='{self.suffix}')\n"
+            f"NOTION_DATABASE_ID={self.NOTION_DATABASE_ID}\n"
+            f"DISCORD_WEBHOOK_URL(active)={masked(self.DISCORD_WEBHOOK_URL)}\n"
+            f"DISCORD_WEBHOOK_URL_PAPER={masked(self.DISCORD_WEBHOOK_URL_PAPER)}\n"
+            f"DISCORD_WEBHOOK_URL_BOOK={masked(self.DISCORD_WEBHOOK_URL_BOOK)}\n"
+            f"DISCORD_WEBHOOK_URL_ACADEMIC={masked(self.DISCORD_WEBHOOK_URL_ACADEMIC)}"
+        )
