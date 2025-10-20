@@ -11,31 +11,49 @@ jobs:
 
     strategy:
       matrix:
+        # 実行引数 (paper, book, academic) を定義
         target: [paper, book, academic]
 
-    # matrix.target を大文字にマップ（Actionsには upper() がないため三項で対応）
+    # --- ▼ ここからが修正点 ▼ ---
+    # すべてのシークレットを環境変数として「最初から」「すべて」定義する
+    # これで main.py が自由に os.getenv(f"NOTION_DATABASE_{env_name.upper()}") できる
     env:
-      TARGET_UPPER: ${{ matrix.target == 'paper' && 'PAPER' || matrix.target == 'book' && 'BOOK' || 'ACADEMIC' }}
+      # --- 共通シークレット ---
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_VERSION: 2022-06-28
+      MESSAGE_TEMPLATE: "{greeting}\n{title}\n{url}" # ハードコードでOK
+      
+      # --- Paper ---
+      NOTION_DATABASE_PAPER: ${{ secrets.NOTION_DATABASE_PAPER }}
+      DISCORD_WEBHOOK_URL_PAPER: ${{ secrets.DISCORD_WEBHOOK_URL_PAPER }}
+      MESSAGE_GREETING_PAPER: ${{ secrets.MESSAGE_GREETING_PAPER }}
+      SELECTED_PROPERTIES_PAPER: ${{ secrets.SELECTED_PROPERTIES_PAPER }}
+
+      # --- Book ---
+      NOTION_DATABASE_BOOK: ${{ secrets.NOTION_DATABASE_BOOK }}
+      DISCORD_WEBHOOK_URL_BOOK: ${{ secrets.DISCORD_WEBHOOK_URL_BOOK }}
+      MESSAGE_GREETING_BOOK: ${{ secrets.MESSAGE_GREETING_BOOK }}
+      SELECTED_PROPERTIES_BOOK: ${{ secrets.SELECTED_PROPERTIES_BOOK }}
+
+      # --- Academic ---
+      NOTION_DATABASE_ACADEMIC: ${{ secrets.NOTION_DATABASE_ACADEMIC }}
+      DISCORD_WEBHOOK_URL_ACADEMIC: ${{ secrets.DISCORD_WEBHOOK_URL_ACADEMIC }}
+      MESSAGE_GREETING_ACADEMIC: ${{ secrets.MESSAGE_GREETING_ACADEMIC }}
+      SELECTED_PROPERTIES_ACADEMIC: ${{ secrets.SELECTED_PROPERTIES_ACADEMIC }}
+    # --- ▲ ここまでが修正点 ▲ ---
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.9' # 3.9でもOK
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Set environment variables from secrets
-        run: |
-          echo "NOTION_API_KEY=${{ secrets.NOTION_API_KEY }}" >> $GITHUB_ENV
-          echo "NOTION_VERSION=2022-06-28" >> $GITHUB_ENV
-          echo "DISCORD_WEBHOOK_URL=${{ secrets[format('DISCORD_WEBHOOK_URL_%s', env.TARGET_UPPER)] }}" >> $GITHUB_ENV
-          echo "NOTION_DATABASE_${{ matrix.target }}=${{ secrets[format('NOTION_DATABASE_%s', env.TARGET_UPPER)] }}" >> $GITHUB_ENV
-          echo "MESSAGE_GREETING_${{ matrix.target }}=${{ secrets[format('MESSAGE_GREETING_%s', env.TARGET_UPPER)] }}" >> $GITHUB_ENV
-          echo "SELECTED_PROPERTIES_${{ matrix.target }}=${{ secrets[format('SELECTED_PROPERTIES_%s', env.TARGET_UPPER)] }}" >> $GITHUB_ENV
-          echo "MESSAGE_TEMPLATE={greeting}\\n{title}\\n{url}" >> $GITHUB_ENV
-
+      # 'Set environment variables' のステップは env ブロックに統合したため不要
+      
       - name: Run main.py for ${{ matrix.target }}
+        # matrix.target (paperなど) を引数として渡す
         run: python main.py ${{ matrix.target }}
