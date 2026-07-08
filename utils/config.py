@@ -73,6 +73,53 @@ class Settings:
 settings = Settings()
 
 
+def _build_targets() -> dict:
+    """
+    対象(paper/book/academic)ごとに、どのget/pick/sendの組み合わせを使うか、
+    そしてどの設定値(DB ID・Webhook URL・挨拶文)を使うかを定義する。
+    main.py はこの辞書を引くだけで処理を実行できる。
+    """
+    from get.notion import get_notion_database
+    from pick.random import (
+        pick_random_unread_title_url,
+        pick_random_unread_book,
+        pick_random_unread_textbook,
+    )
+    from send.discord import send_discord_message
+
+    return {
+        "paper": {
+            "get": lambda: get_notion_database(
+                settings.NOTION_API_KEY, settings.NOTION_DATABASE_PAPER, settings.NOTION_VERSION
+            ),
+            "pick": pick_random_unread_title_url,
+            "send": send_discord_message,
+            "webhook": settings.DISCORD_WEBHOOK_URL_PAPER,
+            "greeting": settings.MESSAGE_GREETING_PAPER,
+        },
+        "book": {
+            "get": lambda: get_notion_database(
+                settings.NOTION_API_KEY, settings.NOTION_DATABASE_BOOK, settings.NOTION_VERSION
+            ),
+            "pick": pick_random_unread_book,
+            "send": send_discord_message,
+            "webhook": settings.DISCORD_WEBHOOK_URL_BOOK,
+            "greeting": settings.MESSAGE_GREETING_BOOK,
+        },
+        "academic": {
+            "get": lambda: get_notion_database(
+                settings.NOTION_API_KEY, settings.NOTION_DATABASE_ACADEMIC, settings.NOTION_VERSION
+            ),
+            "pick": pick_random_unread_textbook,
+            "send": send_discord_message,
+            "webhook": settings.DISCORD_WEBHOOK_URL_ACADEMIC,
+            "greeting": settings.MESSAGE_GREETING_ACADEMIC,
+        },
+    }
+
+
+TARGETS = _build_targets()
+
 
 if __name__ == "__main__":
     try:

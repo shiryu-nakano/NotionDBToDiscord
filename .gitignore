@@ -18,3 +18,5 @@ template/main_academic.py
 template/main_book.py
 template/main_paper.py
 template/main.py
+
+docs/

@@ -47,11 +47,12 @@ Notion に保存している「論文リスト」や「ToDoリスト」から、
 
 | 処理内容         | ファイル                 | 説明                                              |
 | ------------ | -------------------- | ----------------------------------------------- |
-| 環境変数読み込み     | `config.py`          | `.env` から Notion API や Discord Webhook の設定を読み込む |
-| Notion API通信 | `notion_api.py`      | 指定データベースからページ情報を取得                              |
-| データ整形        | `process_data.py`    | `Done` が未完了のページをランダム抽出してタイトル・URLを取得             |
-| Discord送信    | `discord_message.py` | Webhook 経由でメッセージを投稿                             |
-| 実行統合         | `main.py`            | 上記処理を連結し、Notion→Discord投稿を1回実行                  |
+| 環境変数読み込み     | `utils/config.py`    | `.env` から Notion API や Discord Webhook の設定を読み込み、`TARGETS`（対象ごとのget/pick/send組み合わせ）を構築 |
+| Notion API通信 | `get/notion.py`      | 指定データベースからページ情報を取得                              |
+| データ選択        | `pick/random.py`     | `Done`/`Status` などをもとに未読のページをランダム抽出してタイトル・URLを取得 |
+| メッセージ組み立て    | `utils/message.py`   | タイトル・URL・挨拶文からDiscord投稿用メッセージを組み立て               |
+| Discord送信    | `send/discord.py`    | Webhook 経由でメッセージを投稿                             |
+| 実行統合         | `main.py`            | `TARGETS`を引いて get→pick→send を1回実行                |
 | 自動化          | `run.sh`             | cron などのスケジューラから実行するためのスクリプト                    |
 
 ---
@@ -195,7 +196,7 @@ MIT License
 
 ---
 
-このREADMEは、あなたのリポジトリのソース (`config.py`, `notion_api.py`, `process_data.py`, `discord_message.py`, `run.sh.sample`) に基づき、
+このREADMEは、あなたのリポジトリのソース (`utils/config.py`, `get/notion.py`, `pick/random.py`, `utils/message.py`, `send/discord.py`, `run.sh.sample`) に基づき、
 **利用者（エンジニアでなくてもセットアップできる）向けに最適化**した内容です。
 
 ---

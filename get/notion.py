@@ -1,5 +1,5 @@
-from config import settings
 import requests
+
 
 def get_notion_database(api_key: str, database_id: str, notion_version: str = "2022-06-28"):
     """
@@ -40,17 +40,17 @@ def get_notion_database(api_key: str, database_id: str, notion_version: str = "2
         if not data.get("has_more", False):
             break
         start_cursor = data.get("next_cursor")
-    
+
     if not all_results:
         raise Exception("データベースにページが存在しません。")
-    
+
     return all_results
 
 
 def extract_property(page: dict, property_name: str):
     """
     指定したプロパティの値をページから抽出します。
-    
+
     Args:
         page (dict): Notion APIから取得したページ情報。
         property_name (str): 取得対象のプロパティ名。
@@ -64,7 +64,6 @@ def extract_property(page: dict, property_name: str):
 
     prop = properties[property_name]
     prop_type = prop.get("type")
-    #print(f"[DEBUG] Extracting property '{property_name}' of type '{prop_type}'")  # デバッグ用出力
 
     if prop_type == "title":
         # タイトルの場合、複数のテキストブロックを結合
@@ -94,7 +93,7 @@ def extract_property(page: dict, property_name: str):
 def format_page_info(page: dict, selected_properties: list):
     """
     指定したプロパティのみを抽出し、見やすく改行付きの文字列に整形します。
-    
+
     Args:
         page (dict): Notion APIから取得したページ情報。
         selected_properties (list): 取得したいプロパティ名のリスト。
@@ -109,6 +108,7 @@ def format_page_info(page: dict, selected_properties: list):
         lines.append(f"{prop}: {value}")
     return "\n".join(lines)
 
+
 if __name__ == "__main__":
     import os
     import sys
@@ -118,8 +118,8 @@ if __name__ == "__main__":
 
     # 実行引数からターゲット環境名を取得
     if len(sys.argv) != 2:
-        print("Usage: python notion_api.py <env_name>")
-        print("Example: python notion_api.py paper")
+        print("Usage: python -m get.notion <env_name>")
+        print("Example: python -m get.notion paper")
         sys.exit(1)
 
     env_name = sys.argv[1].lower()
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     NOTION_API_KEY = os.getenv("NOTION_API_KEY")
     NOTION_VERSION = os.getenv("NOTION_VERSION", "2022-06-28")
 
-    # サフィックス付き変数を取得    
+    # サフィックス付き変数を取得
     NOTION_DATABASE_ID = os.getenv(f"NOTION_DATABASE_{env_name.upper()}")
     raw_props = os.getenv(f"SELECTED_PROPERTIES_{env_name.upper()}", "")
     SELECTED_PROPERTIES = [s.strip() for s in raw_props.split(",") if s.strip()]
@@ -138,7 +138,6 @@ if __name__ == "__main__":
     if not SELECTED_PROPERTIES:
         raise RuntimeError(f"SELECTED_PROPERTIES_{env_name} が設定されていません")
 
-    # データベース取得
     try:
         results = get_notion_database(NOTION_API_KEY, NOTION_DATABASE_ID, NOTION_VERSION)
         print(f"\n[INFO] Notion DB test for environment: {env_name}")
