@@ -148,6 +148,8 @@ def get_atcoder_target() -> tuple[AtcoderSettings, dict]:
 
     settings = AtcoderSettings()
 
+    # envの初期設定を使わずに，greeting と　levelを指定する
+    '''
     target = {
         "get": lambda: get_atcoder_unsolved_candidates(
             settings.ATCODER_USER_ID, settings.ATCODER_CACHE_PATH
@@ -158,6 +160,18 @@ def get_atcoder_target() -> tuple[AtcoderSettings, dict]:
         "send": send_discord_message,
         "webhook": settings.DISCORD_WEBHOOK_URL_ATCODER,
         "greeting": settings.MESSAGE_GREETING_ATCODER,
+    }
+    '''
+    target = {
+        "get": lambda: get_atcoder_unsolved_candidates(
+            settings.ATCODER_USER_ID, settings.ATCODER_CACHE_PATH
+        ),
+        "pick": lambda results: pick_unsolved_problem(
+            results, ["A", "B"], settings.ATCODER_EXCLUDE_PREFIXES
+        ),
+        "send": send_discord_message,
+        "webhook": settings.DISCORD_WEBHOOK_URL_ATCODER,
+        "greeting": "おはようございます．今日のAtCoderの問題は.....",
     }
     return settings, target
 
