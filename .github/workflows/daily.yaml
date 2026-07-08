@@ -62,7 +62,7 @@ jobs:
       
       - name: Run main.py for ${{ matrix.target }}
         # matrix.target (paperなど) を引数として渡す
-        run: python main.py ${{ matrix.target }}
+        run: python -m run.main ${{ matrix.target }}
 
       - name: Sleep between runs
         # 次のターゲットに移る前にNotion APIの負荷をリセットする

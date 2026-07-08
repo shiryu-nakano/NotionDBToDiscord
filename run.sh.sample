@@ -16,6 +16,6 @@ echo "CWD(after):  $(pwd)"
 /path_to/NotionDBToDiscord/venv/bin/python -c "import sys; print('sys.executable:', sys.executable)"
 
 # 実行
-/path_to/NotionDBToDiscord/venv/bin/python main.py
+/path_to/NotionDBToDiscord/venv/bin/python -m run.main
 
 echo "---- $(date) cron finished ----"

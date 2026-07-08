@@ -52,7 +52,7 @@ Notion に保存している「論文リスト」や「ToDoリスト」から、
 | データ選択        | `pick/random.py`     | `Done`/`Status` などをもとに未読のページをランダム抽出してタイトル・URLを取得 |
 | メッセージ組み立て    | `utils/message.py`   | タイトル・URL・挨拶文からDiscord投稿用メッセージを組み立て               |
 | Discord送信    | `send/discord.py`    | Webhook 経由でメッセージを投稿                             |
-| 実行統合         | `main.py`            | `TARGETS`を引いて get→pick→send を1回実行                |
+| 実行統合         | `run/main.py`        | `TARGETS`を引いて get→pick→send を1回実行                |
 | 自動化          | `run.sh`             | cron などのスケジューラから実行するためのスクリプト                    |
 
 ---
@@ -124,7 +124,7 @@ pip install python-dotenv requests
 `.env` を設定後、以下を実行します。
 
 ```bash
-python main.py
+python -m run.main <paper|book|academic>
 ```
 
 成功すれば、Notionの「未読ページ」が Discord に送信されます。
@@ -142,7 +142,7 @@ macOS / Linux で毎朝8時に実行する場合：
 exec >> /Users/<your_name>/Documents/NotionDBToDiscord/logfile.log 2>&1
 
 cd "/Users/<your_name>/Documents/NotionDBToDiscord" || exit 1
-/Users/<your_name>/.pyenv/versions/NotionPaperDiscord/bin/python main.py
+/Users/<your_name>/.pyenv/versions/NotionPaperDiscord/bin/python -m run.main
 ```
 
 2. cron に登録：
