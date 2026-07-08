@@ -1,15 +1,21 @@
 name: Notion to Discord (Daily All Targets)
 
+
+# schedule/cron: GitHub側のスケジューラが毎日決まった時刻にジョブを起動する機能
+# workflow_dispatch: リポジトリのActionsタブから「Run workflow」ボタンで手動実行できるようにする機能
 on:
   schedule:
     - cron: '0 23 * * *'  # JST 8:00（毎日）
   workflow_dispatch:
+
 
 jobs:
   send-daily-message:
     runs-on: ubuntu-latest
 
     strategy:
+      # matrixのジョブを同時に走らせず1つずつ実行する（Notion APIのレートリミット対策）
+      max-parallel: 1
       matrix:
         # 実行引数 (paper, book, academic) を定義
         target: [paper, book, academic]
@@ -47,7 +53,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9' # 3.9でもOK
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -57,3 +63,7 @@ jobs:
       - name: Run main.py for ${{ matrix.target }}
         # matrix.target (paperなど) を引数として渡す
         run: python main.py ${{ matrix.target }}
+
+      - name: Sleep between runs
+        # 次のターゲットに移る前にNotion APIの負荷をリセットする
+        run: sleep 5
