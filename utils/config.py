@@ -67,11 +67,11 @@ class AtcoderSettings:
         self.MESSAGE_TEMPLATE = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
 
         self.ATCODER_USER_ID = _env("ATCODER_USER_ID", required=True)
-        self.ATCODER_LEVELS = [s.strip().upper() for s in _env("ATCODER_LEVELS", "A").split(",") if s.strip()]
+        self.ATCODER_LEVELS = ["A","B"] #[s.strip().upper() for s in _env("ATCODER_LEVELS", "A").split(",") if s.strip()]
         self.ATCODER_EXCLUDE_PREFIXES = [s.strip() for s in _env("ATCODER_EXCLUDE_PREFIXES", "").split(",") if s.strip()]
         self.ATCODER_CACHE_PATH = _env("ATCODER_CACHE_PATH", "data/ac_cache.json")
         self.DISCORD_WEBHOOK_URL_ATCODER = _env("DISCORD_WEBHOOK_URL_ATCODER", required=True)
-        self.MESSAGE_GREETING_ATCODER = _env("MESSAGE_GREETING_ATCODER", "おはようございます．今日のAtCoderの問題は.....")
+        self.MESSAGE_GREETING_ATCODER = "おはようございます．今日のAtCoderの問題は....." # _env("MESSAGE_GREETING_ATCODER", "おはようございます．今日のAtCoderの問題は.....")
 
     def __repr__(self):
         masked = lambda s: (s[:8] + "..." + s[-4:]) if s and len(s) > 20 else (s or "")

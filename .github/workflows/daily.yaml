@@ -75,12 +75,12 @@ jobs:
       contents: write
 
     env:
-      ATCODER_USER_ID: ${{ secrets.ATCODER_USER_ID }}
-      ATCODER_LEVELS: ${{ secrets.ATCODER_LEVELS }}
-      ATCODER_EXCLUDE_PREFIXES: ${{ secrets.ATCODER_EXCLUDE_PREFIXES }}
-      DISCORD_WEBHOOK_URL_ATCODER: ${{ secrets.DISCORD_WEBHOOK_URL_ATCODER }}
-      MESSAGE_GREETING_ATCODER: ${{ secrets.MESSAGE_GREETING_ATCODER }}
-      MESSAGE_TEMPLATE: "{greeting}\n{title}\n{url}"
+      ATCODER_USER_ID: ${{ secrets.ATCODER_USER_ID }} # Done
+      ATCODER_LEVELS: ${{ secrets.ATCODER_LEVELS }} # Yet
+      ATCODER_EXCLUDE_PREFIXES: ${{ secrets.ATCODER_EXCLUDE_PREFIXES }} # Yet
+      DISCORD_WEBHOOK_URL_ATCODER: ${{ secrets.DISCORD_WEBHOOK_URL_ATCODER }} # Done
+      MESSAGE_GREETING_ATCODER: ${{ secrets.MESSAGE_GREETING_ATCODER }} # Yet
+      MESSAGE_TEMPLATE: "{greeting}\n{title}\n{url}" # Done(here)
 
     steps:
       - uses: actions/checkout@v4
