@@ -6,8 +6,8 @@ from utils.message import build_daily_message
 if __name__ == "__main__":
     # 引数がないと動かない様にしている
     if len(sys.argv) != 2:
-        print("Usage: python -m run.main <env>")
-        print("Example: python -m run.main paper")
+        print("Usage: python -m run.notion_db_discord <env>")
+        print("Example: python -m run.notion_db_discord paper")
         sys.exit(1)
 
     env_name = sys.argv[1].lower()
