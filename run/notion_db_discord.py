@@ -1,6 +1,6 @@
 import sys
 
-from utils.config import settings, TARGETS
+from utils.config import get_notion_targets
 from utils.message import build_daily_message
 
 if __name__ == "__main__":
@@ -12,11 +12,14 @@ if __name__ == "__main__":
 
     env_name = sys.argv[1].lower()
 
-    if env_name not in TARGETS:
+    settings, NOTION_TARGETS = get_notion_targets()
+
+    if env_name not in NOTION_TARGETS:
         print(f"[ERROR] Unknown env: {env_name}")
         sys.exit(1)
 
     print(f"[INFO] Running Notion→Discord for env: {env_name}")
+    print(f"[INFO] Script path: {sys.argv[0]}")
 
     '''
     処理の流れ
@@ -27,7 +30,7 @@ if __name__ == "__main__":
     以上
     '''
 
-    target = TARGETS[env_name]
+    target = NOTION_TARGETS[env_name]
 
     results = target["get"]()
     title, url = target["pick"](results)

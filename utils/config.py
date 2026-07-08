@@ -3,12 +3,18 @@ import os
 from typing import Optional
 
 '''
-.env で設定した変数を読み込んで，settingsに格納する
+.env で設定した変数を読み込んで，設定クラスに格納する
+
+対象(Notion系/AtCoder)ごとに独立したSettingsクラスを用意し、
+get_notion_targets()/get_atcoder_target() が呼ばれた時にだけ、
+その対象に必要な環境変数を検証する。
+こうすることで、例えば run/atcoder_discord.py はNotion関連の
+環境変数が一切無くても単体で動作できる。
 '''
 
 
-
 load_dotenv()
+
 
 def _env(name: str, default: Optional[str] = None, required: bool = False) -> str:
     val = os.getenv(name, default)
@@ -16,51 +22,36 @@ def _env(name: str, default: Optional[str] = None, required: bool = False) -> st
         raise RuntimeError(f"Environment variable '{name}' is required but not set")
     return val
 
-class Settings:
+
+class NotionSettings:
     def __init__(self):
         # Common
-        self.NOTION_API_KEY      = _env("NOTION_API_KEY", required=True)
-        self.NOTION_VERSION      = _env("NOTION_VERSION", "2022-06-28")
-        self.MESSAGE_TEMPLATE    = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
+        self.NOTION_API_KEY = _env("NOTION_API_KEY", required=True)
+        self.NOTION_VERSION = _env("NOTION_VERSION", "2022-06-28")
+        self.MESSAGE_TEMPLATE = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
 
-        # Respective
         # Paper
         self.NOTION_DATABASE_PAPER = _env("NOTION_DATABASE_PAPER", required=True)
         self.DISCORD_WEBHOOK_URL_PAPER = _env("DISCORD_WEBHOOK_URL_PAPER", required=True)
-        self.MESSAGE_GREETING_PAPER    = _env("MESSAGE_GREETING_PAPER", "おはようございます．今日の論文は.....")
+        self.MESSAGE_GREETING_PAPER = _env("MESSAGE_GREETING_PAPER", "おはようございます．今日の論文は.....")
         self.SELECTED_PROPERTIES_PAPER = [s.strip() for s in _env("SELECTED_PROPERTIES_PAPER", "Name,Done,URL").split(",")]
 
         # Book
         self.NOTION_DATABASE_BOOK = _env("NOTION_DATABASE_BOOK", required=True)
         self.DISCORD_WEBHOOK_URL_BOOK = _env("DISCORD_WEBHOOK_URL_BOOK", required=True)
-        self.MESSAGE_GREETING_BOOK    = _env("MESSAGE_GREETING_BOOK", "おはようございます．今日の本は.....")
+        self.MESSAGE_GREETING_BOOK = _env("MESSAGE_GREETING_BOOK", "おはようございます．今日の本は.....")
         self.SELECTED_PROPERTIES_BOOK = [s.strip() for s in _env("SELECTED_PROPERTIES_BOOK", "Name,Status,chps").split(",")]
 
         # Textbook
         self.NOTION_DATABASE_ACADEMIC = _env("NOTION_DATABASE_ACADEMIC", required=True)
         self.DISCORD_WEBHOOK_URL_ACADEMIC = _env("DISCORD_WEBHOOK_URL_ACADEMIC", required=True)
-        self.MESSAGE_GREETING_ACADEMIC    = _env("MESSAGE_GREETING_ACADEMIC", "おはようございます．今日の教科書は.....")
+        self.MESSAGE_GREETING_ACADEMIC = _env("MESSAGE_GREETING_ACADEMIC", "おはようございます．今日の教科書は.....")
         self.SELECTED_PROPERTIES_ACADEMIC = [s.strip() for s in _env("SELECTED_PROPERTIES_ACADEMIC", "Name,Status,Select").split(",")]
 
-        # --- Notionで取得するプロパティ名リスト ---
-        self.SELECTED_PROPERTIES = [s.strip() for s in _env("SELECTED_PROPERTIES", "Name,Done,URL").split(",")]
-
-    
     def __repr__(self):
-        masked = lambda s: (s[:4] + "..." + s[-4:]) if s and len(s) > 10 else (s or "")
-        return (
-            f"Settings(suffix='{self.suffix}')\n"
-            f"NOTION_DATABASE_ID={self.NOTION_DATABASE_ID}\n"
-            f"DISCORD_WEBHOOK_URL(active)={masked(self.DISCORD_WEBHOOK_URL)}\n"
-            f"DISCORD_WEBHOOK_URL_PAPER={masked(self.DISCORD_WEBHOOK_URL_PAPER)}\n"
-            f"DISCORD_WEBHOOK_URL_BOOK={masked(self.DISCORD_WEBHOOK_URL_BOOK)}\n"
-            f"DISCORD_WEBHOOK_URL_ACADEMIC={masked(self.DISCORD_WEBHOOK_URL_ACADEMIC)}"
-        )
-    def __repr__(self):
-        # __init__で定義されている変数を表示するように修正
         masked = lambda s: (s[:8] + "..." + s[-4:]) if s and len(s) > 20 else (s or "")
         return (
-            "Settings(\n"
+            "NotionSettings(\n"
             f"  NOTION_API_KEY: {masked(self.NOTION_API_KEY)}\n"
             f"  NOTION_DATABASE_PAPER: {self.NOTION_DATABASE_PAPER}\n"
             f"  DISCORD_WEBHOOK_URL_PAPER: {masked(self.DISCORD_WEBHOOK_URL_PAPER)}\n"
@@ -68,16 +59,38 @@ class Settings:
             f"  DISCORD_WEBHOOK_URL_BOOK: {masked(self.DISCORD_WEBHOOK_URL_BOOK)}\n"
             f"  NOTION_DATABASE_ACADEMIC: {self.NOTION_DATABASE_ACADEMIC}\n"
             f"  DISCORD_WEBHOOK_URL_ACADEMIC: {masked(self.DISCORD_WEBHOOK_URL_ACADEMIC)}\n"
-            )        
-
-settings = Settings()
+            )
 
 
-def _build_targets() -> dict:
+class AtcoderSettings:
+    def __init__(self):
+        self.MESSAGE_TEMPLATE = _env("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}")
+
+        self.ATCODER_USER_ID = _env("ATCODER_USER_ID", required=True)
+        self.ATCODER_LEVELS = [s.strip().upper() for s in _env("ATCODER_LEVELS", "A").split(",") if s.strip()]
+        self.ATCODER_EXCLUDE_PREFIXES = [s.strip() for s in _env("ATCODER_EXCLUDE_PREFIXES", "").split(",") if s.strip()]
+        self.ATCODER_CACHE_PATH = _env("ATCODER_CACHE_PATH", "data/ac_cache.json")
+        self.DISCORD_WEBHOOK_URL_ATCODER = _env("DISCORD_WEBHOOK_URL_ATCODER", required=True)
+        self.MESSAGE_GREETING_ATCODER = _env("MESSAGE_GREETING_ATCODER", "おはようございます．今日のAtCoderの問題は.....")
+
+    def __repr__(self):
+        masked = lambda s: (s[:8] + "..." + s[-4:]) if s and len(s) > 20 else (s or "")
+        return (
+            "AtcoderSettings(\n"
+            f"  ATCODER_USER_ID: {self.ATCODER_USER_ID}\n"
+            f"  ATCODER_LEVELS: {self.ATCODER_LEVELS}\n"
+            f"  DISCORD_WEBHOOK_URL_ATCODER: {masked(self.DISCORD_WEBHOOK_URL_ATCODER)}\n"
+            )
+
+
+def get_notion_targets() -> tuple[NotionSettings, dict]:
     """
-    対象(paper/book/academic)ごとに、どのget/pick/sendの組み合わせを使うか、
+    Notion由来の対象(paper/book/academic)ごとに、どのget/pick/sendの組み合わせを使うか、
     そしてどの設定値(DB ID・Webhook URL・挨拶文)を使うかを定義する。
-    main.py はこの辞書を引くだけで処理を実行できる。
+    NotionSettings() はここで初めてインスタンス化されるため、
+    Notion関連の環境変数が揃っていない場合、このタイミングで初めてエラーになる。
+
+    run/notion_db_discord.py はこの関数を呼ぶだけで処理を実行できる。
     """
     from get.notion import get_notion_database
     from pick.random import (
@@ -87,7 +100,9 @@ def _build_targets() -> dict:
     )
     from send.discord import send_discord_message
 
-    return {
+    settings = NotionSettings()
+
+    targets = {
         "paper": {
             "get": lambda: get_notion_database(
                 settings.NOTION_API_KEY, settings.NOTION_DATABASE_PAPER, settings.NOTION_VERSION
@@ -116,22 +131,46 @@ def _build_targets() -> dict:
             "greeting": settings.MESSAGE_GREETING_ACADEMIC,
         },
     }
+    return settings, targets
 
 
-TARGETS = _build_targets()
+def get_atcoder_target() -> tuple[AtcoderSettings, dict]:
+    """
+    AtCoder向けのget/pick/sendの組み合わせを定義する。
+    AtcoderSettings() はここで初めてインスタンス化されるため、
+    Notion関連の環境変数が無くても、AtCoder関連さえ揃っていれば動作する。
+
+    run/atcoder_discord.py はこの関数を呼ぶだけで処理を実行できる。
+    """
+    from get.atcoder import get_atcoder_unsolved_candidates
+    from pick.atcoder import pick_unsolved_problem
+    from send.discord import send_discord_message
+
+    settings = AtcoderSettings()
+
+    target = {
+        "get": lambda: get_atcoder_unsolved_candidates(
+            settings.ATCODER_USER_ID, settings.ATCODER_CACHE_PATH
+        ),
+        "pick": lambda results: pick_unsolved_problem(
+            results, settings.ATCODER_LEVELS, settings.ATCODER_EXCLUDE_PREFIXES
+        ),
+        "send": send_discord_message,
+        "webhook": settings.DISCORD_WEBHOOK_URL_ATCODER,
+        "greeting": settings.MESSAGE_GREETING_ATCODER,
+    }
+    return settings, target
 
 
 if __name__ == "__main__":
     try:
-        # このブロック内でのみインスタンス化する
-        settings = Settings()
+        settings, _ = get_notion_targets()
 
-        print("\n\n=== .env テスト出力 ===")
-        print("--- 共通設定 ---")
+        print("\n\n=== .env テスト出力 (Notion) ===")
         print(f"NOTION_API_KEY: {settings.NOTION_API_KEY[:5]}..." if settings.NOTION_API_KEY else "(未設定)")
         print(f"NOTION_VERSION: {settings.NOTION_VERSION}")
         print(f"MESSAGE_TEMPLATE: {settings.MESSAGE_TEMPLATE}")
-        
+
         print("\n--- 論文 (Paper) ---")
         print(f"NOTION_DATABASE_PAPER: {settings.NOTION_DATABASE_PAPER}")
         print(f"DISCORD_WEBHOOK_URL_PAPER: {settings.DISCORD_WEBHOOK_URL_PAPER[:30]}...")
@@ -149,13 +188,24 @@ if __name__ == "__main__":
         print(f"DISCORD_WEBHOOK_URL_ACADEMIC: {settings.DISCORD_WEBHOOK_URL_ACADEMIC[:30]}...")
         print(f"MESSAGE_GREETING_ACADEMIC: {settings.MESSAGE_GREETING_ACADEMIC}")
         print(f"SELECTED_PROPERTIES_ACADEMIC: {settings.SELECTED_PROPERTIES_ACADEMIC}")
-        
+
         print("\n--- __repr__による出力 ---")
         print(settings)
-
         print("========================")
 
     except RuntimeError as e:
-        print(f"\n[エラー] 設定を読み込めませんでした。")
+        print("\n[エラー] Notion設定を読み込めませんでした。")
+        print(e)
+        print(".envファイルの内容を確認してください。")
+
+    try:
+        settings, _ = get_atcoder_target()
+
+        print("\n\n=== .env テスト出力 (AtCoder) ===")
+        print(settings)
+        print("========================")
+
+    except RuntimeError as e:
+        print("\n[エラー] AtCoder設定を読み込めませんでした。")
         print(e)
         print(".envファイルの内容を確認してください。")

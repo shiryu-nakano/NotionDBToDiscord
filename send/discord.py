@@ -19,11 +19,11 @@ if __name__ == "__main__":
     """
     import os
     import sys
+    from types import SimpleNamespace
 
     from dotenv import load_dotenv
 
     from utils.message import build_daily_message
-    from utils.config import settings
 
     load_dotenv()
 
@@ -32,10 +32,11 @@ if __name__ == "__main__":
     print(f"[INFO] Running send.discord test for environment: {env_name}")
     _DISCORD_WEBHOOK_URL = os.getenv(f"DISCORD_WEBHOOK_URL_{env_name.upper()}")
     _MESSAGE_GREETING = os.getenv(f"MESSAGE_GREETING_{env_name.upper()}")
+    _settings = SimpleNamespace(MESSAGE_TEMPLATE=os.getenv("MESSAGE_TEMPLATE", "{greeting}\n{title}\n{url}"))
 
     # 任意のテストメッセージ
     test_title = "これはテストメッセージです！"
     test_url = "https://hackertyper.net/"  # 遊びです．アクセスしてみよう
-    message = build_daily_message(test_title, test_url, settings, _MESSAGE_GREETING)
+    message = build_daily_message(test_title, test_url, _settings, _MESSAGE_GREETING)
     send_discord_message(message, _DISCORD_WEBHOOK_URL)
     print("送信成功")

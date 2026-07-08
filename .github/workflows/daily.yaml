@@ -28,7 +28,7 @@ jobs:
       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
       NOTION_VERSION: 2022-06-28
       MESSAGE_TEMPLATE: "{greeting}\n{title}\n{url}" # ハードコードでOK
-      
+
       # --- Paper ---
       NOTION_DATABASE_PAPER: ${{ secrets.NOTION_DATABASE_PAPER }}
       DISCORD_WEBHOOK_URL_PAPER: ${{ secrets.DISCORD_WEBHOOK_URL_PAPER }}
@@ -59,7 +59,7 @@ jobs:
         run: pip install -r requirements.txt
 
       # 'Set environment variables' のステップは env ブロックに統合したため不要
-      
+
       - name: Run main.py for ${{ matrix.target }}
         # matrix.target (paperなど) を引数として渡す
         run: python -m run.notion_db_discord ${{ matrix.target }}
@@ -67,3 +67,38 @@ jobs:
       - name: Sleep between runs
         # 次のターゲットに移る前にNotion APIの負荷をリセットする
         run: sleep 5
+
+  send-atcoder-message:
+    runs-on: ubuntu-latest
+    # AC済みキャッシュ(data/ac_cache.json)をcommit&pushするために必要
+    permissions:
+      contents: write
+
+    env:
+      ATCODER_USER_ID: ${{ secrets.ATCODER_USER_ID }}
+      ATCODER_LEVELS: ${{ secrets.ATCODER_LEVELS }}
+      ATCODER_EXCLUDE_PREFIXES: ${{ secrets.ATCODER_EXCLUDE_PREFIXES }}
+      DISCORD_WEBHOOK_URL_ATCODER: ${{ secrets.DISCORD_WEBHOOK_URL_ATCODER }}
+      MESSAGE_GREETING_ATCODER: ${{ secrets.MESSAGE_GREETING_ATCODER }}
+      MESSAGE_TEMPLATE: "{greeting}\n{title}\n{url}"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run atcoder_discord
+        run: python -m run.atcoder_discord
+
+      - name: Commit updated AtCoder AC cache
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ac_cache.json
+          git diff --cached --quiet || git commit -m "chore: update AtCoder AC cache"
+          git push

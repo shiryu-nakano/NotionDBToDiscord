@@ -47,12 +47,14 @@ Notion に保存している「論文リスト」や「ToDoリスト」から、
 
 | 処理内容         | ファイル                 | 説明                                              |
 | ------------ | -------------------- | ----------------------------------------------- |
-| 環境変数読み込み     | `utils/config.py`    | `.env` から Notion API や Discord Webhook の設定を読み込み、`TARGETS`（対象ごとのget/pick/send組み合わせ）を構築 |
+| 環境変数読み込み     | `utils/config.py`    | `.env` から各種設定を読み込み、`TARGETS`（対象ごとのget/pick/send組み合わせ）を構築 |
 | Notion API通信 | `get/notion.py`      | 指定データベースからページ情報を取得                              |
-| データ選択        | `pick/random.py`     | `Done`/`Status` などをもとに未読のページをランダム抽出してタイトル・URLを取得 |
+| AtCoder API通信 | `get/atcoder.py`     | 全問題一覧とAC済み問題IDを取得（提出履歴は`data/ac_cache.json`に差分キャッシュ） |
+| データ選択（Notion） | `pick/random.py`     | `Done`/`Status` などをもとに未読のページをランダム抽出してタイトル・URLを取得 |
+| データ選択（AtCoder） | `pick/atcoder.py`    | 指定レベルかつ未ACの問題をランダムに1問選択                        |
 | メッセージ組み立て    | `utils/message.py`   | タイトル・URL・挨拶文からDiscord投稿用メッセージを組み立て               |
 | Discord送信    | `send/discord.py`    | Webhook 経由でメッセージを投稿                             |
-| 実行統合         | `run/notion_db_discord.py` | `TARGETS`を引いて get→pick→send を1回実行          |
+| 実行統合         | `run/notion_db_discord.py` | `TARGETS`を引いて get→pick→send を1回実行（対象: paper/book/academic/atcoder） |
 | 自動化          | `run.sh`             | cron などのスケジューラから実行するためのスクリプト                    |
 
 ---
@@ -124,7 +126,7 @@ pip install python-dotenv requests
 `.env` を設定後、以下を実行します。
 
 ```bash
-python -m run.notion_db_discord <paper|book|academic>
+python -m run.notion_db_discord <paper|book|academic|atcoder>
 ```
 
 成功すれば、Notionの「未読ページ」が Discord に送信されます。
